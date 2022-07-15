@@ -8,6 +8,7 @@ describe("Statement controller", () => {
   const req = request(app);
   let connection:Connection;
   let tokenUser:request.Response;
+  let tokenTransferUser:request.Response;
 
   const deposit = {
     amount:250.00,
@@ -19,12 +20,22 @@ describe("Statement controller", () => {
     description:"gas"
   }
 
+  const transferUser ={
+    name: "string",
+    email: "string",
+    password:'12345'
+  }
+
   beforeAll(async () => {
     connection = await createConnection();
     await connection.runMigrations();
 
     await req.post('/api/v1/users').send(user);
+    await req.post('/api/v1/users').send(transferUser);
+
     tokenUser = await req.post('/api/v1/sessions').send({ email: user.email, password: user.password });
+    tokenTransferUser = await req.post('/api/v1/sessions').send({ email: transferUser.email, password: transferUser.password });
+
   });
 
   afterAll(async () => {
@@ -58,13 +69,25 @@ describe("Statement controller", () => {
 
   });
 
+  test("transfer", async () => {
+
+    const response = await req.post(`/api/v1/statements/transfer/${tokenTransferUser.body.user.id}`).set('Authorization', `bearer ${tokenUser.body.token}`).send({
+      amount:10,
+      description:"test"
+    });
+
+    expect(response.status).toBe(201);
+
+
+  });
+
   test('balance',async() =>{
 
     const response = await req.get('/api/v1/statements/balance').set('Authorization', `bearer ${tokenUser.body.token}`).send()
 
     expect(response.body).toHaveProperty('statement');
-    expect(response.body.statement).toHaveLength(2);
-    expect(response.body).toHaveProperty('balance',150);
+    expect(response.body.statement).toHaveLength(3);
+    expect(response.body).toHaveProperty('balance',140);
   })
 
   test('get statement by id',async() =>{

@@ -1,5 +1,7 @@
 import { Statement } from "../../entities/Statement";
 
+
+
 export type ICreateStatementDTO =
 Pick<
   Statement,
@@ -7,4 +9,4 @@ Pick<
   'description' |
   'amount' |
   'type'
->
+> & Partial<Pick<Statement, 'sender_id'>>
